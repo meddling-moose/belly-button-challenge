@@ -5,7 +5,7 @@ function buildMetadata(sample) {
     let metadata = data.metadata;
     
     // Filter the metadata for the object with the desired sample number
-    let filtered = metadata.filter(isRightNumber);
+    let filtered = metadata.filter(sampleObj => sampleObj.id == sample);
 
     // Use d3 to select the panel with id of `#sample-metadata`
     let selector = d3.select("#sample-metadata");
@@ -27,11 +27,9 @@ function buildCharts(sample) {
 
     // Get the samples field
     let samples = data.samples;
-    console.log(samples);
 
     // Filter the samples for the object with the desired sample number
-    let filtered = samples.filter(isRightNumber);
-    console.log(filtered);
+    let filtered = samples.filter(sampleObj => sampleObj.id == sample);
 
     // Get the otu_ids, otu_labels, and sample_values
     otuIds = filtered[0].otu_ids;
@@ -46,34 +44,50 @@ function buildCharts(sample) {
       mode: "markers",
       marker: {
         color: otuIds,
-        size: sampleValues //How do I make these a little smaller?
+        size: sampleValues,
+        colorscale: "Earth"
       }
     }
 
-    let layout = {
-      title: "Bacteria Cultures Per Sample"
+    let bubbleLayout = {
+      title: "Bacteria Cultures Per Sample",
+      xaxis: {
+        title: "OTU IDs"
+      },
+      yaxis: {
+        title: "Number of Bacteria"
+      }
     }
 
     // Render the Bubble Chart
     let plotData = [traceBubble]
-    Plotly.newPlot("bubble", plotData, layout);
+    Plotly.newPlot("bubble", plotData, bubbleLayout);
 
     // For the Bar Chart, map the otu_ids to a list of strings for your yticks
     let mapped = otuIds.map(id => `OTU ${id}`);
-    console.log(mapped);
 
     // Build a Bar Chart
     // Don't forget to slice and reverse the input data appropriately
     let traceBar = {
       type: "bar",
-      x: sampleValues,
-      y: mapped,
+      x: sampleValues.slice(0, 10).reverse(),
+      y: mapped.slice(0, 10).reverse(),
       orientation: "h"
-    }; //How am I meant to slice and sort this while preserving the integrity of the order?
+    };
+
+    let barLayout = {
+      title: "Top 10 Bacteria Cultures Found",
+      xaxis: {
+        title: "Number of Bacteria"
+      },
+      yaxis: {
+        title: "OTU IDs"
+      }
+    }
 
     // Render the Bar Chart
     let barPlotData = [traceBar]
-    Plotly.newPlot("bar", barPlotData)
+    Plotly.newPlot("bar", barPlotData, barLayout)
   });
 }
 
@@ -112,10 +126,6 @@ function optionChanged(newSample) {
   buildMetadata(newSample);
   buildCharts(newSample);
 }
-
-function isRightNumber(subject) {
-  return subject.id == sample;
-};
 
 // Initialize the dashboard
 init();
